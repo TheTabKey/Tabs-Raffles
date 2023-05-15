@@ -68,7 +68,7 @@ function addWebhookUrl(webhookUrl) {
 
 function updateConfig() {
   const updatedConfig = { ...config, WEBHOOK_URLS };
-  fs.writeFileSync('config-beta.json', JSON.stringify(updatedConfig, null, 2));
+  fs.writeFileSync('config.json', JSON.stringify(updatedConfig, null, 2));
 }
 
 async function fetchRaffles() {
