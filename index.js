@@ -1,7 +1,7 @@
 const axios = require('axios');
 const countries = require('iso-3166-1-alpha-2');
 const discord = require('discord.js');
-const { EmbedBuilder, Client, Intents, Events } = require('discord.js');
+const { EmbedBuilder, Client, Intents, Events, WebhookClient, MessageEmbed } = require('discord.js');
 const fs = require('fs');
 const moment = require('moment')
 
@@ -13,7 +13,7 @@ const config = JSON.parse(configFile);
 
 const ADMIN = config.ADMIN;
 const TOKEN = config.TOKEN;
-const WEBHOOK_URLS = config.WEBHOOK_URLS;
+let WEBHOOK_URLS = config.WEBHOOK_URLS;
 const APP_AUTH = config.APP_AUTH;
 const APP_REFRESH = config.APP_REFRESH;
 
@@ -42,26 +42,48 @@ client.on('ready', async () => {
 });
 
 client.on('messageCreate', async (message) => {
-  if (message.content.startsWith('!add_webhook_mobile') && message.author.id === ADMIN) {
+  if (message.content.startsWith('!add_webhook') && message.author.id === ADMIN) {
     const args = message.content.split(' ');
-    if (args.length === 2) {
+    if (args.length === 3) {
       const webhookUrl = args[1];
-      addWebhookUrl(webhookUrl);
+      const region = args[2];
+      addWebhookUrl(webhookUrl, region);
       const success_message = await message.channel.send(`Webhook URL has been added.`);
       await message.delete();
+
+      // Create an embedded message
+      let embed = new EmbedBuilder()
+        .setTitle('Swift Raffles Setup')
+        .setDescription(`Webhook has been configured and setup for ${region} region!`)
+        .setColor('#00ff00')
+        .setTimestamp();
+
+      // Send the embedded message
+      let webhookPayload = {
+        embeds: [embed],
+        username: 'Swift Raffles',
+        avatar_url: 'https://cdn.discordapp.com/attachments/1088524740693606480/1105587682572251178/swift_mail.png',
+      };
+
+      await axios.post(webhookUrl, webhookPayload);
+
       setTimeout(async () => {
         await success_message.delete();
       }, 5000);
     } else {
-      await message.channel.send('Invalid command usage. Please provide a single webhook URL.');
+      await message.channel.send('Invalid command usage. Please provide a webhook URL and a region.');
     }
-  } else if (message.content === '!test_mobile' && message.author.id === ADMIN) {
-    await testFunction(message);
+  } else if (message.content.startsWith('!test') && message.author.id === ADMIN) {
+    const args = message.content.split(' ');
+    if (args.length === 2) {
+      const region = args[1];
+      await testFunction(message, region);
+    }
   }
 });
 
-function addWebhookUrl(webhookUrl) {
-  WEBHOOK_URLS.push(webhookUrl);
+function addWebhookUrl(webhookUrl, region) {
+  WEBHOOK_URLS[region].push(webhookUrl);
   updateConfig();
 }
 
@@ -104,7 +126,7 @@ async function fetchRaffles() {
   }
 }
 
-async function sendEmbeddedMessage(productName, productRegion, productType, productStore, productOpen, productClose, productDeliveryMethod, productUrl, productStockX, productNotes, productImageUrl, productRetailerImageUrl) {
+async function sendEmbeddedMessage(productName, productRegion, productType, productStore, productOpen, productClose, productDeliveryMethod, productUrl, productStockX, productNotes, productImageUrl, productRetailerImageUrl, regionWebhookUrls) {
   const embed = new EmbedBuilder()
     .setTitle(productName)
     .setURL(productUrl)
@@ -140,7 +162,7 @@ async function sendEmbeddedMessage(productName, productRegion, productType, prod
   };
 
   const tasks = [];
-  for (const webhookUrl of WEBHOOK_URLS) {
+  for (const webhookUrl of regionWebhookUrls) {
     const task = sendWebhook(webhookUrl, webhookPayload);
     tasks.push(task);
   }
@@ -192,7 +214,7 @@ async function checkRaffles() {
       const raffleId = product.id;
       if (!raffleIds.has(raffleId)) {
         raffleIds.add(raffleId);
-        if (product.locale === 'United States' || product.locale === 'Worldwide') {
+        if (product.locale === 'United States' || product.locale === 'Worldwide' || product.locale === 'Europe') {
           const productName = product.product.name;
           const productRegion = product.locale;
           const productType = product.type;
@@ -207,9 +229,19 @@ async function checkRaffles() {
           const productUrl = product.url;
           const productImageUrl = product.product.imageUrl;
           const productRetailerImageUrl = product.retailer.imageUrl;
-          const productStockX = `https://stockx.com/${product.product.stockxSlug}`;
+          const productStockX = `https://stockx.com/${product.product.stockxSlug.replace(/\s+/g, '')}`;
           const productNotes = product.notes || 'None';
-
+          let regionWebhookUrls;
+          if (product.locale === 'United States') {
+            regionWebhookUrls = WEBHOOK_URLS.US;
+          } else if (product.locale === 'Europe') {
+            regionWebhookUrls = WEBHOOK_URLS.EU;
+          } else if (product.locale === 'Worldwide') {
+            regionWebhookUrls = WEBHOOK_URLS.WW;
+          } else {
+            console.log(`invalid region`);
+            continue;
+          }
           await sendEmbeddedMessage(
             productName,
             productRegion,
@@ -222,7 +254,8 @@ async function checkRaffles() {
             productStockX,
             productNotes,
             productImageUrl,
-            productRetailerImageUrl
+            productRetailerImageUrl,
+            regionWebhookUrls
           );
         }
       }
@@ -234,7 +267,7 @@ async function checkRaffles() {
 
 }
   
-async function testFunction(message) {
+async function testFunction(message, region) {
   try {
     const products = await fetchRaffles();
     if (products) {
@@ -279,12 +312,12 @@ async function testFunction(message) {
       const product_image_url = products[0]["product"]["imageUrl"];
       const product_retailer_image_url =
         products[0]["retailer"]["imageUrl"];
-      const product_stockx = `https://stockx.com/${products[0]["product"]["stockxSlug"]}`;
+      const product_stockx = `https://stockx.com/${products[0]["product"]["stockxSlug"].replace(/\s+/g, '')}`;
       const product_notes =
         products[0]["notes"] && products[0]["notes"].length > 0
           ? products[0]["notes"]
           : "None";
-  
+      let regionWebhookUrls = WEBHOOK_URLS[region];
       await sendEmbeddedMessage(
         product_name,
         product_region,
@@ -297,7 +330,8 @@ async function testFunction(message) {
         product_stockx,
         product_notes,
         product_image_url,
-        product_retailer_image_url
+        product_retailer_image_url,
+        regionWebhookUrls
       );
       await message.delete();
       const success_message = await message.channel.send("Test webhook sent.");
@@ -312,7 +346,6 @@ async function testFunction(message) {
     console.error("Test function error:", error);
   }
 }
-
 async function bot() {
   // Schedule periodic checks for new raffles
   await setInterval(checkRaffles, CHECK_INTERVAL);
