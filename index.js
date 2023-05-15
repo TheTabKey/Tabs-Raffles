@@ -58,7 +58,6 @@ client.on('messageCreate', async (message) => {
   } else if (message.content === '!test_mobile' && message.author.id === ADMIN) {
     await testFunction(message);
   }
-  // Rest of the code...
 });
 
 function addWebhookUrl(webhookUrl) {
@@ -319,11 +318,11 @@ async function bot() {
   await setInterval(checkRaffles, CHECK_INTERVAL);
 }
   
-  // Define the interval (in milliseconds) for checking new raffles
+// Define the interval (in milliseconds) for checking new raffles
 const CHECK_INTERVAL = 60000; // 1 minute
 
   
-  // Start the bot
+// Start the bot
 bot();
 
 client.login(TOKEN);
