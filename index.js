@@ -217,7 +217,7 @@ async function checkRaffles() {
       const raffleId = product.id;
       if (!raffleIds.has(raffleId)) {
         raffleIds.add(raffleId);
-        const validLocales = ['United States', 'Worldwide', 'Europe', 'United Kingdom', 'Netherlands', 'France', 'Spain', 'Italy', 'Ireland', 'Switzerland'];
+        const validLocales = ['Europe', 'Denmark', 'France', 'Germany', 'Ireland', 'Italy', 'Netherlands', 'Poland', 'Spain', 'Switzerland', 'United Kingdom', 'United States', 'Worldwide'];
         if (validLocales.includes(product.locale)) {
           const productName = product.product.name;
           const productRegion = product.locale;
@@ -242,14 +242,17 @@ async function checkRaffles() {
             case 'United States':
               regionWebhookUrls = WEBHOOK_URLS.US;
               break;
+            case 'Denmark':
             case 'Europe':
-            case 'United Kingdom':
-            case 'Netherlands':
             case 'France':
-            case 'Spain':
-            case 'Italy':
+            case 'Germany':
             case 'Ireland':
+            case 'Italy':
+            case 'Netherlands':
+            case 'Poland':
+            case 'Spain':
             case 'Switzerland':
+            case 'United Kingdom':
               regionWebhookUrls = WEBHOOK_URLS.EU;
               break;
             case 'Worldwide':
