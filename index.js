@@ -3,7 +3,6 @@ const countries = require('iso-3166-1-alpha-2');
 const discord = require('discord.js');
 const { EmbedBuilder, Client, Intents, Events, WebhookClient, MessageEmbed } = require('discord.js');
 const fs = require('fs');
-const moment = require('moment')
 
 // Read the config file
 const configFile = fs.readFileSync('config.json', 'utf8');

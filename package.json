@@ -2,16 +2,8 @@
   "dependencies": {
     "axios": "^1.4.0",
     "discord.js": "^14.11.0",
-    "dotenv": "^16.0.3",
-    "emoji": "^0.3.2",
     "fs": "^0.0.1-security",
-    "i18n-iso-countries": "^7.6.0",
-    "install": "^0.13.0",
     "iso-3166-1-alpha-2": "^1.0.1",
-    "luxon": "^3.3.0",
-    "moment": "^2.29.4",
-    "node-fetch": "^3.3.1",
-    "npm": "^9.6.6"
   },
   "name": "tabs-raffles",
   "description": "raffle monito",
