@@ -126,7 +126,7 @@ async function fetchRaffles() {
   }
 }
 
-async function sendEmbeddedMessage(productName, productRegion, productType, productStore, productOpen, productClose, productDeliveryMethod, productUrl, productStockX, productNotes, productImageUrl, productRetailerImageUrl, regionWebhookUrls) {
+async function sendEmbeddedMessage(productName, productRegion, productType, productStore, productOpen, productClose, productDeliveryMethod, productUrl, productStockX, productNotes, productImageUrl, productRetailerImageUrl, productpayment, regionWebhookUrls) {
   const embed = new EmbedBuilder()
     .setTitle(productName)
     .setURL(productUrl)
@@ -141,6 +141,7 @@ async function sendEmbeddedMessage(productName, productRegion, productType, prod
       { name: 'Close', value: productClose, inline: true },
       { name: 'Delivery', value: getDeliveryEmoji(productDeliveryMethod), inline: true },
       { name: 'Entry:', value: `[Enter at ${productStore}](${productUrl})`, inline: true },
+      { name: 'PreAuth', value: productpayment, inline: true },
       { name: 'Value:', value: `:chart_with_upwards_trend: [StockX](${productStockX})`, inline: true },
     ])
     .setFooter({ text: 'Swift Raffles', iconURL: 'https://cdn.discordapp.com/attachments/1088524740693606480/1105587682572251178/swift_mail.png' })
@@ -214,16 +215,17 @@ async function checkRaffles() {
       const raffleId = product.id;
       if (!raffleIds.has(raffleId)) {
         raffleIds.add(raffleId);
-        if (product.locale === 'United States' || product.locale === 'Worldwide' || product.locale === 'Europe') {
+        const validLocales = ['United States', 'Worldwide', 'Europe', 'United Kingdom'];
+        if (validLocales.includes(product.locale)) {
           const productName = product.product.name;
           const productRegion = product.locale;
           const productType = product.type;
           const productStore = product.retailer.name;
           const productOpen = product.startDate
-            ? moment(product.startDate).utcOffset('-0400').format('MMMM DD, hh:mm A')
+            ? `<t:${Date.parse(product.startDate) / 1000}>`
             : 'Now';
           const productClose = product.endDate
-            ? moment(product.endDate).utcOffset('-0400').format('MMMM DD, hh:mm A')
+            ? `<t:${Date.parse(product.endDate) / 1000}>`
             : 'TBA';
           const productDeliveryMethod = product.hasPostage ? 'Shipping' : 'In Store Pickup';
           const productUrl = product.url;
@@ -231,16 +233,23 @@ async function checkRaffles() {
           const productRetailerImageUrl = product.retailer.imageUrl;
           const productStockX = `https://stockx.com/${product.product.stockxSlug.replace(/\s+/g, '')}`;
           const productNotes = product.notes || 'None';
+          const productpayment = product.retailer.preAuth ? ":credit_card: CC" : ":x: None";
+          console.log('passed challenge 1 in checkraffles.');
           let regionWebhookUrls;
-          if (product.locale === 'United States') {
-            regionWebhookUrls = WEBHOOK_URLS.US;
-          } else if (product.locale === 'Europe') {
-            regionWebhookUrls = WEBHOOK_URLS.EU;
-          } else if (product.locale === 'Worldwide') {
-            regionWebhookUrls = WEBHOOK_URLS.WW;
-          } else {
-            console.log(`invalid region`);
-            continue;
+          switch (product.locale) {
+            case 'United States':
+              regionWebhookUrls = WEBHOOK_URLS.US;
+              break;
+            case 'Europe':
+            case 'United Kingdom':
+              regionWebhookUrls = WEBHOOK_URLS.EU;
+              break;
+            case 'Worldwide':
+              regionWebhookUrls = WEBHOOK_URLS.WW;
+              break;
+            default:
+              console.log('Invalid region');
+              return;
           }
           await sendEmbeddedMessage(
             productName,
@@ -255,6 +264,7 @@ async function checkRaffles() {
             productNotes,
             productImageUrl,
             productRetailerImageUrl,
+            productpayment,
             regionWebhookUrls
           );
         }
@@ -275,35 +285,13 @@ async function testFunction(message, region) {
       const product_region = products[0]["locale"];
       const product_type = products[0]["type"];
       const product_store = products[0]["retailer"]["name"];
-  
-      let product_open, product_close;
-      if (!products[0]["startDate"]) {
-        product_open = "Now";
-      } else {
-        const dt2 = new Date(products[0]["startDate"]);
-        const pst_timestamp2 = new Date(dt2.getTime() - 4 * 60 * 60 * 1000);
-        product_open = pst_timestamp2.toLocaleString("en-US", {
-          month: "long",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric",
-          hour12: true,
-        });
-      }
-  
-      if (products[0]["endDate"]) {
-        const dt = new Date(products[0]["endDate"]);
-        const pst_timestamp = new Date(dt.getTime() - 4 * 60 * 60 * 1000);
-        product_close = pst_timestamp.toLocaleString("en-US", {
-          month: "long",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric",
-          hour12: true,
-        });
-      } else {
-        product_close = "TBA";
-      }
+      
+      const product_open = products[0]['startDate']
+            ? `<t:${Date.parse(products[0]['startDate']) / 1000}>`
+            : 'Now';
+      const product_close = products[0]['endDate']
+        ? `<t:${Date.parse(products[0]['endDate']) / 1000}>`
+        : 'TBA';
   
       const product_delivery_method = products[0]["hasPostage"]
         ? "Shipping"
@@ -317,6 +305,8 @@ async function testFunction(message, region) {
         products[0]["notes"] && products[0]["notes"].length > 0
           ? products[0]["notes"]
           : "None";
+      const productpayment = products[0]['retailer']['preAuth'] ? ":credit_card: CC" : ":x: None";
+
       let regionWebhookUrls = WEBHOOK_URLS[region];
       await sendEmbeddedMessage(
         product_name,
@@ -331,6 +321,7 @@ async function testFunction(message, region) {
         product_notes,
         product_image_url,
         product_retailer_image_url,
+        productpayment,
         regionWebhookUrls
       );
       await message.delete();

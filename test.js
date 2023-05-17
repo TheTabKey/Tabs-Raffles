@@ -76,3 +76,10 @@ async function testFunction(message) {
       console.error("Test function error:", error);
     }
   }
+
+
+
+const countries = require('iso-3166-1-alpha-2');
+
+const country_code = countries.getCode("United Kingdom")
+console.log(country_code)
