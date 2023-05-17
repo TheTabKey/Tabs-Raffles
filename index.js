@@ -109,7 +109,7 @@ async function fetchRaffles() {
     "limit": 16,
     "offset": 0
   }
-  const response = await axios.post(url, { data }, { headers });
+  const response = await axios.post(url, data, { headers });
 
   try {
     if (response.status === 200) {
@@ -348,6 +348,7 @@ async function testFunction(message, region) {
     console.error("Test function error:", error);
   }
 }
+
 async function bot() {
   // Schedule periodic checks for new raffles
   await setInterval(checkRaffles, CHECK_INTERVAL);

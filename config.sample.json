@@ -1,0 +1,11 @@
+{
+    "ADMIN": "DISCORD USER ID",
+    "TOKEN": "BOT TOKEN",
+    "APP_AUTH": "",
+    "APP_REFRESH": "",
+    "WEBHOOK_URLS": {
+      "US": [],
+      "EU": [],
+      "WW": []
+    }
+}
