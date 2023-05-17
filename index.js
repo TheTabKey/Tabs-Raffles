@@ -141,11 +141,13 @@ async function sendEmbeddedMessage(productName, productRegion, productType, prod
       { name: 'Close', value: productClose, inline: true },
       { name: 'Delivery', value: getDeliveryEmoji(productDeliveryMethod), inline: true },
       { name: 'Entry:', value: `[Enter at ${productStore}](${productUrl})`, inline: true },
-      { name: 'PreAuth', value: productpayment, inline: true },
-      { name: 'Value:', value: `:chart_with_upwards_trend: [StockX](${productStockX})`, inline: true },
     ])
     .setFooter({ text: 'Swift Raffles', iconURL: 'https://cdn.discordapp.com/attachments/1088524740693606480/1105587682572251178/swift_mail.png' })
     .setTimestamp(new Date());
+  if (productpayment !== 'None') {
+    embed.addFields({ name: 'PreAuth', value: productpayment, inline: true });
+  }
+  embed.addFields({name: 'Value:', value: `:chart_with_upwards_trend: [StockX](${productStockX})`, inline: true});
 
   if (productNotes.length > 23) {
     const notesValue = productNotes
@@ -215,7 +217,7 @@ async function checkRaffles() {
       const raffleId = product.id;
       if (!raffleIds.has(raffleId)) {
         raffleIds.add(raffleId);
-        const validLocales = ['United States', 'Worldwide', 'Europe', 'United Kingdom'];
+        const validLocales = ['United States', 'Worldwide', 'Europe', 'United Kingdom', 'Netherlands', 'France', 'Spain', 'Italy', 'Ireland', 'Switzerland'];
         if (validLocales.includes(product.locale)) {
           const productName = product.product.name;
           const productRegion = product.locale;
@@ -233,7 +235,7 @@ async function checkRaffles() {
           const productRetailerImageUrl = product.retailer.imageUrl;
           const productStockX = `https://stockx.com/${product.product.stockxSlug.replace(/\s+/g, '')}`;
           const productNotes = product.notes || 'None';
-          const productpayment = product.retailer.preAuth ? ":credit_card: CC" : ":x: None";
+          const productpayment = product.retailer.preAuth ? ":credit_card:" : "None";
           console.log('passed challenge 1 in checkraffles.');
           let regionWebhookUrls;
           switch (product.locale) {
@@ -242,6 +244,12 @@ async function checkRaffles() {
               break;
             case 'Europe':
             case 'United Kingdom':
+            case 'Netherlands':
+            case 'France':
+            case 'Spain':
+            case 'Italy':
+            case 'Ireland':
+            case 'Switzerland':
               regionWebhookUrls = WEBHOOK_URLS.EU;
               break;
             case 'Worldwide':
@@ -305,7 +313,7 @@ async function testFunction(message, region) {
         products[0]["notes"] && products[0]["notes"].length > 0
           ? products[0]["notes"]
           : "None";
-      const productpayment = products[0]['retailer']['preAuth'] ? ":credit_card: CC" : ":x: None";
+      const productpayment = products[0]['retailer']['preAuth'] ? ":credit_card:" : "None";
 
       let regionWebhookUrls = WEBHOOK_URLS[region];
       await sendEmbeddedMessage(
