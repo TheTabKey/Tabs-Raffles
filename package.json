@@ -12,5 +12,23 @@
     "moment": "^2.29.4",
     "node-fetch": "^3.3.1",
     "npm": "^9.6.6"
-  }
+  },
+  "name": "tabs-raffles",
+  "description": "raffle monito",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheTabKey/Tabs-Raffles.git"
+  },
+  "author": "TheTabKey",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheTabKey/Tabs-Raffles/issues"
+  },
+  "homepage": "https://github.com/TheTabKey/Tabs-Raffles#readme"
 }
